@@ -1,3 +1,6 @@
 *~
 prgm
+test
 INPUT
+*.gcda
+*.gcno
