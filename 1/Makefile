@@ -6,6 +6,7 @@ OBJECTS=$(SOURCES:.c=.o)
 BINARY=prgm
 
 all: $(SOURCES) $(BINARY) cleanobj
+valgrind: $(CFLAGS) += -g
 
 $(BINARY): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -g -o $@
@@ -13,7 +14,7 @@ $(BINARY): $(OBJECTS)
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
 
-valgrind:
+valgrind: $(BINARY)
 	valgrind --tool=memcheck --leak-check=full -q ./$(BINARY)
 
 clean: cleanobj cleanemacs
