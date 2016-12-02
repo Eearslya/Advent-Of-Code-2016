@@ -4,10 +4,6 @@
 #include "1.h"
 
 int main(int argc, char **argv) {
-    return aoc(argc, argv);
-}
-
-int aoc(int argc, char **argv) {
     char *name = "INPUT";
     if (argc > 1) name = argv[1];
     char *input = load_file(name);
@@ -45,8 +41,6 @@ struct inst *parse_input(char *str, int *res) {
     char dir;
     struct inst *ret;
 
-    input = NULL;
-    ret = NULL;
     len = strlen(str);
     input = malloc(sizeof(char)*(len+1));
     strcpy(input,str);
@@ -77,14 +71,6 @@ struct inst *parse_input(char *str, int *res) {
     return ret;
 }
 
-void run(char *input) {
-    int count;
-    struct inst *inst = parse_input(input, &count);
-    printf("Part One Solution: %d\n", part_one(inst, count));
-    printf("Part Two Solution: %d\n", part_two(inst, count));
-    free(inst);
-}
-
 int turn(int start, int dir) {
     if (dir == LEFT) start--;
     else start++;
@@ -93,49 +79,30 @@ int turn(int start, int dir) {
     return start;
 }
 
-int part_one(struct inst *input, int len) {
-    int i;
-    int x = 0;
-    int y = 0;
-    int dir = NORTH;
-    for (i=0; i < len; i++) {
-	dir = turn(dir, input[i].dir);
-	if (dir == NORTH) y += input[i].dist;
-	else if (dir == EAST) x += input[i].dist;
-	else if (dir == SOUTH) y -= input[i].dist;
-	else x -= input[i].dist;
-    }
-    int distance = abs(x) + abs(y);
-    return distance;
-}
-
-int part_two(struct inst *input, int len) {
-    int i, j;
-    int x = 512;
-    int y = 512;
-    int dir = NORTH;
-    int done = 0;
+void run(char *input) {
+    int count, partone, parttwo, i, j, x, y, dir;
     unsigned char map[1024][1024];
-    for (i=0; i < 1024; i++) {
-	for (j=0; j < 1024; j++) {
-	    map[i][j] = 0;
-	}
-    }
-    for (i=0; i < len; i++) {
-	dir = turn(dir, input[i].dir);
-	for (j=0; j < input[i].dist; j++) {
+    struct inst *inst;
+    inst = parse_input(input, &count);
+    parttwo = -1;
+    x = 512;
+    y = 512;
+    dir = NORTH;
+    memset(map,0,1024*1024);
+    for (i=0; i < count; i++) {
+	dir = turn(dir, inst[i].dir);
+	for (j=0; j < inst[i].dist; j++) {
 	    if (dir==NORTH) y++;
 	    else if (dir==EAST) x++;
 	    else if (dir==SOUTH) y--;
 	    else x--;
 	    map[y][x]++;
-	    if (map[y][x] > 1) {
-		done = 1;
-		break;
+	    if (map[y][x] > 1 && parttwo == -1) {
+		parttwo = abs(512-abs(x)) + abs(512-abs(y));
 	    }
 	}
-	if (done) break;
     }
-    int distance = abs(512-abs(x)) + abs(512-abs(y));
-    return distance;
+    partone = abs(512-abs(x)) + abs(512-abs(y));
+    printf("Part One Solution: %d\nPart Two Solution: %d\n",partone,parttwo);
+    free(inst);
 }

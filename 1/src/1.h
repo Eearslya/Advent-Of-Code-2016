@@ -14,10 +14,7 @@ struct inst {
     unsigned char dist;
 };
 
-int aoc(int,char**);
 int turn(int,int);
-int part_one(struct inst*,int);
-int part_two(struct inst*,int);
 char *load_file(char*);
 void error(char*);
 void run(char*);
