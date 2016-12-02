@@ -3,20 +3,9 @@
 #include <string.h>
 #include "1.h"
 
-#ifdef UNITTEST /* Remove main() and swap memory functions if we're doing unit tests */
-# include <stdlib.h>
-# include <setjmp.h>
-# include <stddef.h>
-# include <cmocka.h>
-# define malloc(n) test_malloc(n)
-# define calloc(n,c) test_calloc(n,c)
-# define free(n) test_free(n)
-# define realloc(n,s) test_realloc(n,s)
-#else
 int main(int argc, char **argv) {
     return aoc(argc, argv);
 }
-#endif /* UNITTEST */
 
 int aoc(int argc, char **argv) {
     char *name = "INPUT";
