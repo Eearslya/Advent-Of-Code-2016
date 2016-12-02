@@ -1,0 +1,9 @@
+language: c
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq build-essential libcmocka-dev gcovr
+sudo: false
+script:
+  - ./build.sh 1
+after_success:
+  - ./test.sh 1
