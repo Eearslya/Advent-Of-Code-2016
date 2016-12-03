@@ -85,26 +85,18 @@ void run(char *input) {
 
 char *keypad(char **input, int len, int sx, int sy, char **m, int xx, int yx) {
     int i,j,x,y,z;
+    char c;
     char *code = malloc(sizeof(char)*(len+1));
     x = sx;
     y = sy;
     for (i=0; i < len; i++) {
 	z = strlen(input[i]);
 	for (j=0; j < z; j++) {
-	    switch(input[i][j]) {
-	    case 'U':
-		if (y>0 && m[y-1][x] != ' ') y--;
-		break;
-	    case 'R':
-		if (x<xx && m[y][x+1] != ' ') x++;
-		break;
-	    case 'D':
-		if (y<yx && m[y+1][x] != ' ') y++;
-		break;
-	    case 'L':
-		if (x>0 && m[y][x-1] != ' ') x--;
-		break;
-	    }
+	    c = input[i][j];
+	    if (c=='U' && y>0 && m[y-1][x] != ' ') y--;
+	    else if (c=='R' && x<xx && m[y][x+1] != ' ') x++;
+	    else if (c=='D' && y<yx && m[y+1][x] != ' ') y++;
+	    else if (c=='L' && x>0 && m[y][x-1] != ' ') x--;
 	}
 	code[i] = m[y][x];
     }
