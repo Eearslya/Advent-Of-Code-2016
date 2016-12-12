@@ -123,7 +123,7 @@ void run(char *input) {
 	for (j=0; j < inst->dist; j++) {
 	    x += move_matrix[dir][0];
 	    y += move_matrix[dir][1];
-	    if (!pos_push(&pos,x,y) && parttwo == -1) {
+	    if (parttwo == -1 && !pos_push(&pos,x,y)) {
 		parttwo = abs(x) + abs(y);
 	    }
 	}
