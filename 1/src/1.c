@@ -7,10 +7,6 @@ int main(int argc, char **argv) {
     char *name = "INPUT";
     if (argc > 1) name = argv[1];
     char *input = load_file(name);
-    if (input == NULL) {
-	printf("There was an error opening the input file \"%s\".\n", name);
-	return 1;
-    }
     run(input);
     free(input);
     return 0;
@@ -22,87 +18,123 @@ char *load_file(char *name) {
     char *ret;
     size_t res;
     input = fopen(name, "r");
-    if (input == NULL) return NULL;
+    if (input == NULL) error("Error opening file!");
     fseek(input, 0, SEEK_END);
     len = ftell(input);
     rewind(input);
     ret = malloc(sizeof(char) * (len+1));
-    if (ret == NULL) return NULL;
+    if (ret == NULL) error("Out of memory!");
     res = fread(ret,1,len,input);
-    if (res != len) return NULL;
+    if (res != len) error("Error reading file!");
     ret[len] = 0;
     fclose(input);
     return ret;
 }
 
-struct inst *parse_input(char *str, int *res) {
-    int i, len, count, dist;
-    char *buf, *input;
-    char dir;
+void inst_push(struct inst **head, int dir, int dist) {
+    struct inst *cur;
+    if (*head == NULL) {
+	*head = malloc(sizeof(struct inst));
+	if (*head == NULL) error("Out of memory!");
+	(*head)->dir = dir;
+	(*head)->dist = dist;
+	(*head)->next = NULL;
+	return;
+    }
+    cur = *head;
+    while (cur->next != NULL) cur = cur->next;
+    cur->next = malloc(sizeof(struct inst));
+    if (cur->next == NULL) error("Out of memory!");
+    cur->next->dir = dir;
+    cur->next->dist = dist;
+    cur->next->next = NULL;
+}
+
+struct inst *inst_pop(struct inst **head) {
     struct inst *ret;
-
-    len = strlen(str);
-    input = malloc(sizeof(char)*(len+1));
-    strcpy(input,str);
-    count = 1;
-    for (i=0; i < len; i++) {
-	if (input[i] == ',') count++;
-    }
-
-    ret = malloc(sizeof(struct inst) * count);
-    buf = strtok(input,", ");
-    i = 0;
-    while (buf != NULL) {
-	sscanf(buf, "%c%d", &dir, &dist);
-	if (dir == 'L') ret[i].dir = LEFT;
-	else ret[i].dir = RIGHT;
-	ret[i].dist = dist;
-	buf = strtok(NULL, ", ");
-	i++;
-    }
-    if (i == 0) {
-	free(input);
-	free(ret);
-	return NULL;
-    }
-
-    *res = count;
-    free(input);
+    struct inst *next;
+    if (*head == NULL) return NULL;
+    next = (*head)->next;
+    ret = *head;
+    *head = next;
     return ret;
 }
 
-int turn(int start, int dir) {
-    if (dir == LEFT) start--;
-    else start++;
-    if (start == 0) start = 4;
-    if (start == 5) start = 1;
-    return start;
+int pos_push(struct pos **head, int x, int y) {
+    struct pos *cur;
+    if (*head == NULL) {
+	*head = malloc(sizeof(struct pos));
+	if (*head == NULL) error("Out of memory!");
+	(*head)->x = x;
+	(*head)->y = y;
+	(*head)->next = NULL;
+	return 1;
+    }
+    cur = *head;
+    while (cur->next != NULL) {
+	if (cur->x == x && cur->y == y) return 0;
+	cur = cur->next;
+    }
+    cur->next = malloc(sizeof(struct pos));
+    if (cur->next == NULL) error("Out of memory!");
+    cur->next->x = x;
+    cur->next->y = y;
+    cur->next->next = NULL;
+    return 1;
+}
+
+void pos_destroy(struct pos *head) {
+    struct pos *tmp;
+    while (head != NULL) {
+	tmp = head;
+	head = head->next;
+	free(tmp);
+    }
+}
+
+struct inst *parse_input(char *str) {
+    int dist;
+    char *buf;
+    char dir;
+    struct inst *ret;
+    ret = NULL;
+    buf = strtok(str,", ");
+    while (buf != NULL) {
+	if (sscanf(buf, "%c%d", &dir, &dist) != 2) error("Invalid input file!");
+	inst_push(&ret,(dir=='L'?LEFT:RIGHT),dist);
+	buf = strtok(NULL, ", ");
+    }
+    return ret;
 }
 
 void run(char *input) {
-    int count, partone, parttwo, i, j, x, y, dir;
-    unsigned char map[1024][1024];
+    int partone, parttwo, j, x, y, dir;
+    struct inst *insts;
     struct inst *inst;
-    inst = parse_input(input, &count);
+    struct pos *pos;
+    pos = NULL;
+    insts = parse_input(input);
     parttwo = -1;
-    x = 512;
-    y = 512;
+    x = 0;
+    y = 0;
     dir = NORTH;
-    memset(map,0,1024*1024);
-    for (i=0; i < count; i++) {
-	dir = turn(dir, inst[i].dir);
-	for (j=0; j < inst[i].dist; j++) {
-	    if (dir==NORTH) y++;
-	    else if (dir==EAST) x++;
-	    else if (dir==SOUTH) y--;
-	    else x--;
-	    map[y][x]++;
-	    if (map[y][x] > 1 && parttwo == -1) {
-		parttwo = abs(512-abs(x)) + abs(512-abs(y));
+    while ((inst = inst_pop(&insts)) != NULL) {
+	dir += (inst->dir==LEFT?(dir==0?3:-1):(dir==3?-3:1));
+	for (j=0; j < inst->dist; j++) {
+	    x += move_matrix[dir][0];
+	    y += move_matrix[dir][1];
+	    if (!pos_push(&pos,x,y) && parttwo == -1) {
+		parttwo = abs(x) + abs(y);
 	    }
 	}
+	free(inst);
     }
-    partone = abs(512-abs(x)) + abs(512-abs(y));
+    pos_destroy(pos);
+    partone = abs(x) + abs(y);
     printf("Part One Solution: %d\nPart Two Solution: %d\n",partone,parttwo);
-    free(inst);
+}
+
+void _error(char *msg, const char *file, int line) {
+    printf("%s:%d: %s\n", file, line, msg);
+    exit(1);
 }
